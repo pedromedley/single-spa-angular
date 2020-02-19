@@ -107,7 +107,6 @@ function unmount(opts, props) {
       routerRef.dispose();
     }
     window.removeEventListener('single-spa:routing-event', opts.routingEventListener)
-    opts.bootstrappedModule.destroy();
     if (opts.AnimationEngine) {
       /*
       The BrowserAnimationsModule does not clean up after itself :'(. When you unmount/destroy the main module, the
@@ -136,6 +135,16 @@ function unmount(opts, props) {
       const animationEngine = opts.bootstrappedModule.injector.get(opts.AnimationEngine);
       animationEngine._transitionEngine.flush();
     }
+
+    // With angular 9, once the module gets destroyed it is no longer possible to get objects from the injector
+    opts.bootstrappedModule.destroy();
+    // Also the app is not removed from DOM, so the removal is forced
+    const domElementGetter = chooseDomElementGetter(opts, props);
+    if (domElementGetter) {
+      const containerEl = getContainerEl(domElementGetter);
+      containerEl.innerHTML = '';
+    }
+
     delete opts.bootstrappedModule;
   });
 }
